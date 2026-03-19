@@ -9,132 +9,79 @@ export default function AuthScreen() {
 }
 
 function LoginForm({ onSwitch }) {
-  const { login, mode } = useAuth()
-  const [email, setEmail]   = useState('')
-  const [pass,  setPass]    = useState('')
-  const [err,   setErr]     = useState('')
-  const [loading, setLoading] = useState(false)
+  const { login } = useAuth()
+  const [u, setU] = useState('')
+  const [p, setP] = useState('')
+  const [err, setErr] = useState('')
 
-  const submit = async () => {
-    if (!email || !pass) return setErr('Completa todos los campos')
-    setLoading(true); setErr('')
-    const e = await login(email.trim(), pass)
+  const submit = () => {
+    const e = login(u.trim().toLowerCase(), p)
     if (e) setErr(e)
-    setLoading(false)
   }
 
   return (
-    <div style={pageStyle}>
+    <div className="page" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
       <div style={{ width: 340 }}>
         <Logo />
         <div className="card">
-          <h2 style={h2}>Iniciar sesión</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 18, color: 'var(--azul)' }}>
+            Iniciar sesión
+          </h2>
           {err && <div className="alert alert-err">{err}</div>}
-          <Field label={mode === 'supabase' ? 'Email' : 'Email o usuario'}>
-            <input
-              type={mode === 'supabase' ? 'email' : 'text'}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              autoComplete="email"
-            />
+          <Field label="Usuario">
+            <input value={u} onChange={e => setU(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
           </Field>
           <Field label="Contraseña" style={{ marginBottom: 18 }}>
-            <input
-              type="password"
-              value={pass}
-              onChange={e => setPass(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              autoComplete="current-password"
-            />
+            <input type="password" value={p} onChange={e => setP(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
           </Field>
-          <button
-            className="btn-primary"
-            style={{ width: '100%', marginBottom: 12, opacity: loading ? 0.7 : 1 }}
-            onClick={submit}
-            disabled={loading}
-          >
-            {loading ? 'Entrando…' : 'Entrar'}
+          <button className="btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={submit}>
+            Entrar
           </button>
-          <p style={linkRow}>
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--sub)' }}>
             ¿No tienes cuenta?{' '}
-            <span style={link} onClick={onSwitch}>Regístrate</span>
+            <span style={{ color: 'var(--azul2)', cursor: 'pointer', fontWeight: 600 }} onClick={onSwitch}>
+              Regístrate
+            </span>
           </p>
         </div>
-        {mode === 'local' && (
-          <div className="alert alert-warn" style={{ marginTop: 12, fontSize: 11 }}>
-            Modo offline — datos guardados en este navegador. Configura Supabase para la nube.
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
 function RegisterForm({ onSwitch }) {
-  const { register, mode } = useAuth()
-  const [f, setF]         = useState({ email: '', pass: '', nombre: '', nit: '' })
-  const [err, setErr]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [confirm, setConfirm] = useState(false)
+  const { register } = useAuth()
+  const [f, setF] = useState({ u: '', p: '', nombre: '', nit: '' })
+  const [err, setErr] = useState('')
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
-  const submit = async () => {
-    setLoading(true); setErr('')
-    const e = await register(f.email.trim(), f.pass, f.nombre.trim(), f.nit.trim())
-    if (e) { setErr(e); setLoading(false); return }
-    if (mode === 'supabase') setConfirm(true)
-    setLoading(false)
+  const submit = () => {
+    const e = register(f.u.trim().toLowerCase(), f.p, f.nombre.trim(), f.nit.trim())
+    if (e) setErr(e)
   }
 
-  if (confirm) return (
-    <div style={pageStyle}>
-      <div style={{ width: 360, textAlign: 'center' }}>
-        <Logo />
-        <div className="card">
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
-          <h2 style={{ ...h2, marginBottom: 8 }}>Revisa tu email</h2>
-          <p style={{ fontSize: 13, color: 'var(--sub)', marginBottom: 18 }}>
-            Te enviamos un enlace de confirmación a <strong>{f.email}</strong>.
-            Haz clic en el enlace y luego inicia sesión.
-          </p>
-          <button onClick={onSwitch} style={{ width: '100%' }}>← Volver al login</button>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
-    <div style={pageStyle}>
+    <div className="page" style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
       <div style={{ width: 380 }}>
         <Logo />
         <div className="card">
-          <h2 style={h2}>Crear cuenta</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, color: 'var(--azul)' }}>Crear cuenta</h2>
           <p style={{ fontSize: 12, color: 'var(--sub)', marginBottom: 18 }}>Configura tu empresa contratista</p>
           {err && <div className="alert alert-err">{err}</div>}
           <div className="sect-title">Acceso</div>
-          <div className="grid2" style={{ marginBottom: 10 }}>
-            <Field label={mode === 'supabase' ? 'Email' : 'Email o usuario'}>
-              <input type={mode === 'supabase' ? 'email' : 'text'} value={f.email} onChange={e => set('email', e.target.value)} autoComplete="email" />
-            </Field>
-            <Field label="Contraseña">
-              <input type="password" value={f.pass} onChange={e => set('pass', e.target.value)} autoComplete="new-password" />
-            </Field>
+          <div className="grid2" style={{ marginBottom: 12 }}>
+            <Field label="Usuario"><input value={f.u} onChange={e => set('u', e.target.value)} /></Field>
+            <Field label="Contraseña"><input type="password" value={f.p} onChange={e => set('p', e.target.value)} /></Field>
           </div>
           <div className="sect-title">Datos de la empresa</div>
           <Field label="Nombre / Razón social" style={{ marginBottom: 10 }}>
-            <input value={f.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Constructora XYZ S.A.S" />
+            <input value={f.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Empresa Constructora S.A.S" />
           </Field>
           <Field label="NIT" style={{ marginBottom: 20 }}>
             <input value={f.nit} onChange={e => set('nit', e.target.value)} placeholder="900.000.000-0" />
           </Field>
-          <button
-            className="btn-primary"
-            style={{ width: '100%', marginBottom: 10, opacity: loading ? 0.7 : 1 }}
-            onClick={submit}
-            disabled={loading}
-          >
-            {loading ? 'Creando cuenta…' : 'Crear cuenta'}
+          <button className="btn-primary" style={{ width: '100%', marginBottom: 10 }} onClick={submit}>
+            Crear cuenta
           </button>
           <button style={{ width: '100%' }} onClick={onSwitch}>← Volver al login</button>
         </div>
@@ -143,7 +90,6 @@ function RegisterForm({ onSwitch }) {
   )
 }
 
-// ── Shared ────────────────────────────────────────────────────────────────────
 function Logo() {
   return (
     <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -154,7 +100,7 @@ function Logo() {
           <circle cx="12" cy="13" r="2" fill="#1B3A5C"/>
         </svg>
       </div>
-      <h1 style={{ fontSize: 19, fontWeight: 700, color: 'var(--azul)' }}>Actas de Obra</h1>
+      <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--azul)' }}>Actas de Obra</h1>
       <p style={{ fontSize: 12, color: 'var(--sub)', marginTop: 4 }}>Plataforma para contratistas · Colombia</p>
     </div>
   )
@@ -168,8 +114,3 @@ export function Field({ label, children, style }) {
     </div>
   )
 }
-
-const pageStyle = { display: 'flex', justifyContent: 'center', paddingTop: 48, minHeight: '100vh' }
-const h2        = { fontSize: 15, fontWeight: 700, marginBottom: 18, color: 'var(--azul)' }
-const linkRow   = { textAlign: 'center', fontSize: 12, color: 'var(--sub)' }
-const link      = { color: 'var(--azul2)', cursor: 'pointer', fontWeight: 600 }

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import { useAuth } from './AuthContext'
 import { Field } from './AuthScreen'
 import { fmtCOP, avatarColor, initials } from '../lib/helpers'
@@ -29,10 +30,9 @@ export default function Settings({ onBack }) {
 
 // ── Mi Empresa ────────────────────────────────────────────────────────────────
 function EmpresaTab() {
-  const { user, updateUser, uploadLogo, removeLogo, logoUrl } = useAuth()
+  const { user, updateUser } = useAuth()
   const [f, setF] = useState({ nombre: user.nombre || '', nit: user.nit || '', representante: user.representante || '', tel: user.tel || '', direccion: user.direccion || '', ciudad: user.ciudad || '', tipo: user.tipo || 'Obra civil' })
-  const [ok, setOk]           = useState(false)
-  const [logoLoading, setLogoLoading] = useState(false)
+  const [ok, setOk] = useState(false)
   const logoRef = useRef()
 
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
@@ -43,23 +43,21 @@ function EmpresaTab() {
     setTimeout(() => setOk(false), 2500)
   }
 
-  const handleLogo = async (e) => {
+  const handleLogo = (e) => {
     const file = e.target.files[0]; if (!file) return
-    setLogoLoading(true)
-    try { await uploadLogo(file) } catch (err) { alert('Error subiendo logo: ' + err.message) }
-    setLogoLoading(false)
+    const reader = new FileReader()
+    reader.onload = ev => updateUser({ logo: ev.target.result })
+    reader.readAsDataURL(file)
   }
 
   return (
     <div className="card">
       <div className="sect-title">Logo</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-      {logoLoading
-        ? <div style={{ width: 80, height: 56, background: 'var(--gris)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--sub)' }}>Subiendo…</div>
-        : logoUrl
-          ? <img src={logoUrl} alt="logo" style={{ height: 56, maxWidth: 160, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--borde)' }} />
+        {user.logo
+          ? <img src={user.logo} alt="logo" style={{ height: 56, maxWidth: 160, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--borde)' }} />
           : <div style={{ width: 80, height: 56, background: 'var(--gris)', borderRadius: 8, border: '1px dashed var(--borde)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sub)', fontSize: 11 }}>Sin logo</div>
-      }
+        }
         <div>
           <label style={{ cursor: 'pointer' }}>
             <span style={{ border: '1px solid var(--azul2)', color: 'var(--azul2)', background: 'var(--azul-bg)', padding: '6px 14px', borderRadius: 'var(--radio)', fontSize: 12, fontWeight: 600 }}>
@@ -67,8 +65,8 @@ function EmpresaTab() {
             </span>
             <input ref={logoRef} type="file" accept="image/*" onChange={handleLogo} style={{ display: 'none' }} />
           </label>
-          {logoUrl && (
-            <button className="btn-danger btn-sm" style={{ marginLeft: 8 }} onClick={() => removeLogo()}>Quitar</button>
+          {user.logo && (
+            <button className="btn-danger btn-sm" style={{ marginLeft: 8 }} onClick={() => updateUser({ logo: null })}>Quitar</button>
           )}
           <p style={{ fontSize: 11, color: 'var(--sub)', marginTop: 6 }}>PNG o JPG · aparece en el encabezado del acta</p>
         </div>
@@ -187,29 +185,28 @@ function CatalogoTab() {
 
   const del = (i) => updateUser({ catalogo: user.catalogo.filter((_, j) => j !== i) })
 
-  const importCSV = (e) => {
+  const importExcel = (e) => {
     const file = e.target.files[0]; if (!file) return
     const reader = new FileReader()
     reader.onload = ev => {
-      const lines = ev.target.result.split('\n').filter(l => l.trim())
-      if (!lines.length) return
-      const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''))
+      const wb = XLSX.read(ev.target.result, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 })
+      if (rows.length < 2) return
+      const header = rows[0].map(h => String(h || '').toLowerCase().trim())
       const iCod = header.findIndex(h => h.includes('cod') || h === 'item')
       const iAct = header.findIndex(h => h.includes('activ') || h.includes('desc'))
       const iUnd = header.findIndex(h => h.includes('und') || h.includes('unit'))
       const iVal = header.findIndex(h => h.includes('val') || h.includes('prec'))
-      const items = lines.slice(1).map(l => {
-        const cols = l.split(',').map(c => c.trim().replace(/"/g, ''))
-        return {
-          codigo:   iCod >= 0 ? cols[iCod] || '' : '',
-          actividad: iAct >= 0 ? cols[iAct] || '' : cols[1] || '',
-          und:      iUnd >= 0 ? cols[iUnd] || 'UND' : 'UND',
-          valor:    parseFloat(iVal >= 0 ? cols[iVal] : cols[3]) || 0,
-        }
-      }).filter(it => it.actividad)
+      const items = rows.slice(1).map(cols => ({
+        codigo:    iCod >= 0 ? String(cols[iCod] || '') : '',
+        actividad: iAct >= 0 ? String(cols[iAct] || '') : String(cols[1] || ''),
+        und:       iUnd >= 0 ? String(cols[iUnd] || 'UND') : 'UND',
+        valor:     parseFloat(iVal >= 0 ? cols[iVal] : cols[3]) || 0,
+      })).filter(it => it.actividad)
       updateUser({ catalogo: [...(user.catalogo || []), ...items] })
     }
-    reader.readAsText(file)
+    reader.readAsArrayBuffer(file)
     e.target.value = ''
   }
 
@@ -222,9 +219,9 @@ function CatalogoTab() {
         <div style={{ display: 'flex', gap: 8 }}>
           <label style={{ cursor: 'pointer' }}>
             <span style={{ border: '1px solid var(--azul2)', color: 'var(--azul2)', background: 'var(--azul-bg)', padding: '5px 12px', borderRadius: 'var(--radio)', fontSize: 12, fontWeight: 600 }}>
-              Importar CSV
+              📥 Importar Excel
             </span>
-            <input type="file" accept=".csv" onChange={importCSV} style={{ display: 'none' }} />
+            <input type="file" accept=".xlsx,.xls" onChange={importExcel} style={{ display: 'none' }} />
           </label>
           <button className="btn-sm" onClick={() => setShowForm(s => !s)}>{showForm ? 'Cancelar' : '+ Agregar'}</button>
         </div>
@@ -255,7 +252,7 @@ function CatalogoTab() {
       {cat.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--sub)' }}>
           <p style={{ marginBottom: 6 }}>Sin actividades en el catálogo.</p>
-          <p style={{ fontSize: 12 }}>Importa un CSV con columnas: <code style={{ background: 'var(--gris)', padding: '1px 5px', borderRadius: 3 }}>codigo, actividad, und, valor</code></p>
+          <p style={{ fontSize: 12 }}>Importa un Excel (.xlsx) con columnas: <code style={{ background: 'var(--gris)', padding: '1px 5px', borderRadius: 3 }}>Codigo · Actividad · Und · Valor</code></p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
