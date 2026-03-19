@@ -139,26 +139,26 @@ export default function HistorialActas({ onNew, onEdit, onSettings, onLogout }) 
           const est = a.estado || 'Borrador'
           const s = ESTADO_STYLE[est] || ESTADO_STYLE.Borrador
           return (
-            <div key={a.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '12px 14px' }}>
+            <div key={a.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '12px 14px', flexWrap: 'nowrap' }}>
               {/* Badge número */}
               <div style={{ width: 42, height: 42, background: 'var(--azul)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 11, flexShrink: 0, textAlign: 'center', lineHeight: 1.2 }}>
                 No.<br />{a.numero || '?'}
               </div>
 
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 700, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <p style={{ fontWeight: 700, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#1a1a1a' }}>
                   {a.obra || 'Sin nombre de obra'}
                 </p>
-                <p style={{ fontSize: 11, color: 'var(--sub)', marginTop: 2 }}>
+                <p style={{ fontSize: 11, color: 'var(--sub)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {a.fecha}{a.empresa_c ? ' · ' + a.empresa_c : ''}
                 </p>
               </div>
 
               {/* Total */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 90 }}>
                 <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--verde)', whiteSpace: 'nowrap' }}>{fmtCOP(a.total_final)}</p>
-                <p style={{ fontSize: 10, color: 'var(--sub)', marginTop: 2 }}>
+                <p style={{ fontSize: 10, color: 'var(--sub)', marginTop: 2, whiteSpace: 'nowrap' }}>
                   {a.updated_at ? new Date(a.updated_at).toLocaleDateString('es-CO') : ''}
                 </p>
               </div>
@@ -172,6 +172,7 @@ export default function HistorialActas({ onNew, onEdit, onSettings, onLogout }) 
                   background: s.bg, color: s.color,
                   border: `1px solid ${s.border}`, borderRadius: 6,
                   cursor: 'pointer', flexShrink: 0,
+                  width: 100,
                 }}
               >
                 {ESTADOS.map(st => <option key={st}>{st}</option>)}
