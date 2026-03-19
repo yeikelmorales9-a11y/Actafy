@@ -18,6 +18,8 @@ create table if not exists public.perfiles (
   aiu_imp     numeric default 3,
   aiu_util    numeric default 10,
   iva         numeric default 19,
+  clientes    jsonb default '[]',
+  catalogo    jsonb default '[]',
   created_at  timestamptz default now()
 );
 
@@ -71,8 +73,10 @@ create table if not exists public.actas (
 );
 
 -- Si ya corriste el schema anterior, ejecuta estas líneas para migrar:
--- alter table public.actas add column if not exists fotos  jsonb default '[]';
--- alter table public.actas add column if not exists estado text default 'Borrador';
+-- alter table public.actas    add column if not exists fotos    jsonb default '[]';
+-- alter table public.actas    add column if not exists estado   text  default 'Borrador';
+-- alter table public.perfiles add column if not exists clientes jsonb default '[]';
+-- alter table public.perfiles add column if not exists catalogo jsonb default '[]';
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  Row Level Security (RLS) — cada usuario solo ve sus datos

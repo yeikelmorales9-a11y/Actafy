@@ -1,14 +1,26 @@
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './components/AuthContext'
-import AuthScreen from './components/AuthScreen'
+import AuthScreen, { ResetPasswordForm } from './components/AuthScreen'
 import ActaEditor from './components/ActaEditor'
 import Settings from './components/Settings'
 import HistorialActas from './components/HistorialActas'
 
 function AppInner() {
-  const { user, logout } = useAuth()
-  const [view, setView] = useState('historial') // historial es la pantalla principal
-  const [editActa, setEditActa] = useState(null) // null = nueva | { id, form } = existente
+  const { user, logout, passwordRecovery, loading } = useAuth()
+  const [view, setView]       = useState('historial')
+  const [editActa, setEditActa] = useState(null)
+
+  // Pantalla de carga mientras Supabase verifica la sesión
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--sub)', fontSize: 13 }}>
+        Cargando…
+      </div>
+    )
+  }
+
+  // El usuario llegó desde el email de recuperación
+  if (passwordRecovery) return <ResetPasswordForm />
 
   if (!user) return <AuthScreen />
 
@@ -38,7 +50,6 @@ function AppInner() {
     />
   )
 
-  // view === 'historial' (default)
   return (
     <HistorialActas
       onNew={handleNew}

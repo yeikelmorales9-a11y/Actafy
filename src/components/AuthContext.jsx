@@ -1,66 +1,178 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 import { loadDB, saveDB } from '../lib/helpers'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [db, setDb] = useState(() => loadDB())
-  const [username, setUsername] = useState(null)
+  // ── Supabase mode ──────────────────────────────────────────────────────────
+  const [supaUser, setSupaUser]           = useState(null)
+  const [profile, setProfile]             = useState(null)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
+  const [loading, setLoading]             = useState(!!supabase)
 
-  const persist = useCallback((newDb) => {
-    setDb(newDb)
-    saveDB(newDb)
+  // ── localStorage mode ──────────────────────────────────────────────────────
+  const [db, setDb]           = useState(() => loadDB())
+  const [localUser, setLocalUser] = useState(null)
+
+  // ── Supabase auth listener ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!supabase) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true)
+        setLoading(false)
+        return
+      }
+      if (session?.user) {
+        setSupaUser(session.user)
+        await fetchProfile(session.user.id)
+      } else {
+        setSupaUser(null)
+        setProfile(null)
+      }
+      setLoading(false)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
-  const user = username ? db.users[username] : null
+  const fetchProfile = async (uid) => {
+    const { data } = await supabase.from('perfiles').select('*').eq('id', uid).single()
+    setProfile({
+      nombre:        data?.nombre        || '',
+      nit:           data?.nit           || '',
+      representante: data?.representante || '',
+      tel:           data?.tel           || '',
+      direccion:     data?.direccion     || '',
+      ciudad:        data?.ciudad        || '',
+      tipo:          data?.tipo          || 'Obra civil',
+      logo:          data?.logo_url      || null,
+      clientes:      data?.clientes      || [],
+      catalogo:      data?.catalogo      || [],
+      aiu: {
+        admin:       data?.aiu_admin ?? 10,
+        imprevistos: data?.aiu_imp   ?? 3,
+        utilidad:    data?.aiu_util  ?? 10,
+      },
+      iva: data?.iva ?? 19,
+    })
+  }
 
-  const login = (u, p) => {
-    const found = db.users[u]
+  // ── Auth actions ───────────────────────────────────────────────────────────
+  const login = async (email, password) => {
+    if (supabase) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return error.message === 'Invalid login credentials'
+        ? 'Email o contraseña incorrectos'
+        : error.message
+      return null
+    }
+    const found = db.users[email]
     if (!found) return 'Usuario no encontrado'
-    if (found.password !== p) return 'Contraseña incorrecta'
-    setUsername(u)
+    if (found.password !== password) return 'Contraseña incorrecta'
+    setLocalUser(email)
     return null
   }
 
-  const register = (u, p, nombre, nit) => {
-    if (!u || !p || !nombre) return 'Usuario, contraseña y nombre son obligatorios'
-    if (db.users[u]) return 'Ese usuario ya existe'
+  const register = async (email, password, nombre, nit) => {
+    if (supabase) {
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) return error.message
+      // Update profile with nombre/nit right after sign up
+      if (data.user) {
+        await supabase.from('perfiles').upsert({ id: data.user.id, nombre, nit: nit || '' })
+      }
+      return null
+    }
+    if (!email || !password || !nombre) return 'Email, contraseña y nombre son obligatorios'
+    if (db.users[email]) return 'Ese email ya está registrado'
     const newDb = {
       ...db,
       users: {
         ...db.users,
-        [u]: {
-          password: p,
-          nombre,
-          nit: nit || '',
-          representante: '',
-          tel: '',
-          direccion: '',
-          ciudad: '',
-          tipo: 'Obra civil',
-          logo: null,
-          clientes: [],
-          catalogo: [],
-          aiu: { admin: 10, imprevistos: 3, utilidad: 10 },
-          iva: 19,
+        [email]: {
+          password, nombre, nit: nit || '',
+          representante: '', tel: '', direccion: '', ciudad: '',
+          tipo: 'Obra civil', logo: null,
+          clientes: [], catalogo: [],
+          aiu: { admin: 10, imprevistos: 3, utilidad: 10 }, iva: 19,
         },
       },
     }
-    persist(newDb)
-    setUsername(u)
+    saveDB(newDb)
+    setDb(newDb)
+    setLocalUser(email)
     return null
   }
 
-  const logout = () => setUsername(null)
+  const logout = async () => {
+    if (supabase) {
+      setPasswordRecovery(false)
+      await supabase.auth.signOut()
+    } else {
+      setLocalUser(null)
+    }
+  }
 
-  const updateUser = useCallback((data) => {
-    if (!username) return
-    const newDb = { ...db, users: { ...db.users, [username]: { ...db.users[username], ...data } } }
-    persist(newDb)
-  }, [db, username, persist])
+  const resetPassword = async (email) => {
+    if (!supabase) return 'Recuperación de contraseña no disponible en modo local'
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    })
+    return error ? error.message : null
+  }
+
+  const updatePassword = async (newPassword) => {
+    if (!supabase) return 'Función no disponible'
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) return error.message
+    setPasswordRecovery(false)
+    return null
+  }
+
+  const persist = useCallback((newDb) => { setDb(newDb); saveDB(newDb) }, [])
+
+  const updateUser = useCallback(async (data) => {
+    if (supabase && supaUser) {
+      const update = {}
+      if ('nombre' in data)        update.nombre        = data.nombre
+      if ('nit' in data)           update.nit           = data.nit
+      if ('representante' in data) update.representante = data.representante
+      if ('tel' in data)           update.tel           = data.tel
+      if ('direccion' in data)     update.direccion     = data.direccion
+      if ('ciudad' in data)        update.ciudad        = data.ciudad
+      if ('tipo' in data)          update.tipo          = data.tipo
+      if ('logo' in data)          update.logo_url      = data.logo
+      if ('clientes' in data)      update.clientes      = data.clientes
+      if ('catalogo' in data)      update.catalogo      = data.catalogo
+      if ('aiu' in data) {
+        update.aiu_admin = data.aiu.admin
+        update.aiu_imp   = data.aiu.imprevistos
+        update.aiu_util  = data.aiu.utilidad
+      }
+      if ('iva' in data) update.iva = data.iva
+      if (Object.keys(update).length > 0) {
+        await supabase.from('perfiles').upsert({ id: supaUser.id, ...update })
+      }
+      setProfile(p => ({ ...p, ...data }))
+    } else if (localUser) {
+      const newDb = { ...db, users: { ...db.users, [localUser]: { ...db.users[localUser], ...data } } }
+      persist(newDb)
+    }
+  }, [db, localUser, supaUser, persist])
+
+  // ── Computed ───────────────────────────────────────────────────────────────
+  const user     = supabase ? (supaUser ? profile : null) : (localUser ? db.users[localUser] : null)
+  const userId   = supabase ? (supaUser?.id || null) : localUser
+  const username = supabase ? (supaUser?.email || null) : localUser
 
   return (
-    <AuthContext.Provider value={{ user, username, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{
+      user, userId, username,
+      login, register, logout, updateUser,
+      resetPassword, updatePassword, passwordRecovery,
+      loading,
+    }}>
       {children}
     </AuthContext.Provider>
   )
