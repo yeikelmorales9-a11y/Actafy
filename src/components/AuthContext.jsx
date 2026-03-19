@@ -4,16 +4,21 @@ import { loadDB, saveDB } from '../lib/helpers'
 
 const AuthContext = createContext(null)
 
+// Persiste sesión local entre recargas (sessionStorage = hasta que cierra la pestaña)
+const SESSION_KEY = 'actafy_local_session'
+const getLocalSession = () => { try { return sessionStorage.getItem(SESSION_KEY) } catch { return null } }
+const setLocalSession = (v) => { try { v ? sessionStorage.setItem(SESSION_KEY, v) : sessionStorage.removeItem(SESSION_KEY) } catch {} }
+
 export function AuthProvider({ children }) {
   // ── Supabase mode ──────────────────────────────────────────────────────────
-  const [supaUser, setSupaUser]           = useState(null)
-  const [profile, setProfile]             = useState(null)
+  const [supaUser, setSupaUser]                 = useState(null)
+  const [profile, setProfile]                   = useState(null)
   const [passwordRecovery, setPasswordRecovery] = useState(false)
-  const [loading, setLoading]             = useState(!!supabase)
+  const [loading, setLoading]                   = useState(!!supabase)
 
   // ── localStorage mode ──────────────────────────────────────────────────────
-  const [db, setDb]           = useState(() => loadDB())
-  const [localUser, setLocalUser] = useState(null)
+  const [db, setDb]         = useState(() => loadDB())
+  const [localUser, setLocalUser] = useState(() => getLocalSession())
 
   // ── Supabase auth listener ─────────────────────────────────────────────────
   useEffect(() => {
@@ -37,7 +42,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const fetchProfile = async (uid) => {
-    const { data } = await supabase.from('perfiles').select('*').eq('id', uid).single()
+    const { data, error } = await supabase.from('perfiles').select('*').eq('id', uid).single()
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error cargando perfil:', error.message)
+    }
     setProfile({
       nombre:        data?.nombre        || '',
       nit:           data?.nit           || '',
@@ -47,8 +55,8 @@ export function AuthProvider({ children }) {
       ciudad:        data?.ciudad        || '',
       tipo:          data?.tipo          || 'Obra civil',
       logo:          data?.logo_url      || null,
-      clientes:      data?.clientes      || [],
-      catalogo:      data?.catalogo      || [],
+      clientes:      Array.isArray(data?.clientes) ? data.clientes : [],
+      catalogo:      Array.isArray(data?.catalogo) ? data.catalogo : [],
       aiu: {
         admin:       data?.aiu_admin ?? 10,
         imprevistos: data?.aiu_imp   ?? 3,
@@ -71,6 +79,7 @@ export function AuthProvider({ children }) {
     if (!found) return 'Usuario no encontrado'
     if (found.password !== password) return 'Contraseña incorrecta'
     setLocalUser(email)
+    setLocalSession(email)
     return null
   }
 
@@ -78,7 +87,6 @@ export function AuthProvider({ children }) {
     if (supabase) {
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) return error.message
-      // Update profile with nombre/nit right after sign up
       if (data.user) {
         await supabase.from('perfiles').upsert({ id: data.user.id, nombre, nit: nit || '' })
       }
@@ -102,6 +110,7 @@ export function AuthProvider({ children }) {
     saveDB(newDb)
     setDb(newDb)
     setLocalUser(email)
+    setLocalSession(email)
     return null
   }
 
@@ -111,6 +120,7 @@ export function AuthProvider({ children }) {
       await supabase.auth.signOut()
     } else {
       setLocalUser(null)
+      setLocalSession(null)
     }
   }
 
@@ -132,33 +142,48 @@ export function AuthProvider({ children }) {
 
   const persist = useCallback((newDb) => { setDb(newDb); saveDB(newDb) }, [])
 
+  // updateUser retorna { ok: true } o { ok: false, error: string }
   const updateUser = useCallback(async (data) => {
     if (supabase && supaUser) {
       const update = {}
-      if ('nombre' in data)        update.nombre        = data.nombre
-      if ('nit' in data)           update.nit           = data.nit
+      if ('nombre'        in data) update.nombre        = data.nombre
+      if ('nit'           in data) update.nit           = data.nit
       if ('representante' in data) update.representante = data.representante
-      if ('tel' in data)           update.tel           = data.tel
-      if ('direccion' in data)     update.direccion     = data.direccion
-      if ('ciudad' in data)        update.ciudad        = data.ciudad
-      if ('tipo' in data)          update.tipo          = data.tipo
-      if ('logo' in data)          update.logo_url      = data.logo
-      if ('clientes' in data)      update.clientes      = data.clientes
-      if ('catalogo' in data)      update.catalogo      = data.catalogo
-      if ('aiu' in data) {
+      if ('tel'           in data) update.tel           = data.tel
+      if ('direccion'     in data) update.direccion     = data.direccion
+      if ('ciudad'        in data) update.ciudad        = data.ciudad
+      if ('tipo'          in data) update.tipo          = data.tipo
+      if ('logo'          in data) update.logo_url      = data.logo
+      if ('clientes'      in data) update.clientes      = data.clientes
+      if ('catalogo'      in data) update.catalogo      = data.catalogo
+      if ('aiu'           in data) {
         update.aiu_admin = data.aiu.admin
         update.aiu_imp   = data.aiu.imprevistos
         update.aiu_util  = data.aiu.utilidad
       }
       if ('iva' in data) update.iva = data.iva
+
       if (Object.keys(update).length > 0) {
-        await supabase.from('perfiles').upsert({ id: supaUser.id, ...update })
+        const { error } = await supabase.from('perfiles').upsert({ id: supaUser.id, ...update })
+        if (error) {
+          console.error('Error guardando perfil:', error)
+          return { ok: false, error: `Error al guardar: ${error.message}` }
+        }
       }
       setProfile(p => ({ ...p, ...data }))
-    } else if (localUser) {
-      const newDb = { ...db, users: { ...db.users, [localUser]: { ...db.users[localUser], ...data } } }
-      persist(newDb)
+      return { ok: true }
     }
+
+    if (localUser) {
+      const newDb = {
+        ...db,
+        users: { ...db.users, [localUser]: { ...db.users[localUser], ...data } },
+      }
+      persist(newDb)
+      return { ok: true }
+    }
+
+    return { ok: false, error: 'No hay sesión activa' }
   }, [db, localUser, supaUser, persist])
 
   // ── Computed ───────────────────────────────────────────────────────────────
