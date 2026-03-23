@@ -13,18 +13,19 @@ const ESTADO_STYLE = {
 }
 
 export default function HistorialActas({ onNew, onEdit, onSettings, onLogout }) {
-  const { user, username } = useAuth()
+  const { user, userId } = useAuth()
   const [actas, setActas] = useState([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [opening, setOpening] = useState(null)
 
   useEffect(() => {
-    loadActas(username)
+    if (!userId) return
+    loadActas(userId)
       .then(setActas)
       .catch(e => setErr(e.message))
       .finally(() => setLoading(false))
-  }, [username])
+  }, [userId])
 
   const handleEdit = async (id) => {
     setOpening(id)
@@ -36,15 +37,12 @@ export default function HistorialActas({ onNew, onEdit, onSettings, onLogout }) 
         form: {
           numero:        acta.numero        || '',
           fecha:         acta.fecha         || '',
-          periodo:       acta.periodo       || '',
           contrato:      acta.contrato      || '',
           obra:          acta.obra          || '',
           ubicacion:     acta.ubicacion     || '',
           empresa_c:     acta.empresa_c     || '',
           nit_cl:        acta.nit_cl        || '',
           director:      acta.director      || '',
-          cargo:         acta.cargo         || 'Director de Obra',
-          tel_cl:        acta.tel_cl        || '',
           observaciones: acta.observaciones || '',
           grupos:        acta.grupos        || [],
           fotos:         acta.fotos         || [],

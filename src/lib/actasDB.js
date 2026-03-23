@@ -17,37 +17,41 @@ async function hasSession() {
   return !!session
 }
 
-export async function saveActa(userId, form, totals, existingId = null) {
-  const record = {
-    numero:        form.numero,
-    fecha:         form.fecha || null,
-    periodo:       form.periodo,
-    contrato:      form.contrato,
-    obra:          form.obra,
-    ubicacion:     form.ubicacion,
-    empresa_c:     form.empresa_c,
-    nit_cl:        form.nit_cl,
-    director:      form.director,
-    cargo:         form.cargo,
-    tel_cl:        form.tel_cl,
-    observaciones: form.observaciones,
-    grupos:        form.grupos,
-    fotos:         form.fotos,
-    total_bruto:   totals.bruto,
-    total_final:   totals.total,
+// Construye el record solo con los campos actuales del formulario
+function buildRecord(form, totals) {
+  return {
+    numero:        form.numero        || null,
+    fecha:         form.fecha         || null,
+    contrato:      form.contrato      || null,
+    obra:          form.obra          || null,
+    ubicacion:     form.ubicacion     || null,
+    empresa_c:     form.empresa_c     || null,
+    nit_cl:        form.nit_cl        || null,
+    director:      form.director      || null,
+    observaciones: form.observaciones || null,
+    grupos:        form.grupos        || [],
+    fotos:         form.fotos         || [],
+    total_bruto:   totals.bruto       || 0,
+    total_final:   totals.total       || 0,
     updated_at:    new Date().toISOString(),
   }
+}
+
+export async function saveActa(userId, form, totals, existingId = null) {
+  const record = buildRecord(form, totals)
 
   if (await hasSession()) {
     if (existingId) {
       const { data, error } = await supabase
         .from('actas').update(record).eq('id', existingId).select('id').single()
-      if (error) throw error
+      if (error) throw new Error(error.message)
       return data.id
     } else {
       const { data, error } = await supabase
-        .from('actas').insert({ ...record, user_id: userId, estado: 'Borrador' }).select('id').single()
-      if (error) throw error
+        .from('actas')
+        .insert({ ...record, user_id: userId, estado: 'Borrador' })
+        .select('id').single()
+      if (error) throw new Error(error.message)
       return data.id
     }
   }
@@ -71,7 +75,7 @@ export async function updateEstado(id, estado) {
   if (await hasSession()) {
     const { error } = await supabase
       .from('actas').update({ estado, updated_at: new Date().toISOString() }).eq('id', id)
-    if (error) throw error
+    if (error) throw new Error(error.message)
     return
   }
   const actas = loadLocal()
@@ -87,9 +91,10 @@ export async function loadActas(userId) {
     const { data, error } = await supabase
       .from('actas')
       .select('id, numero, fecha, obra, empresa_c, total_final, estado, updated_at')
+      .eq('user_id', userId)                      // ← filtro explícito por usuario
       .order('updated_at', { ascending: false })
-    if (error) throw error
-    return data
+    if (error) throw new Error(error.message)
+    return data || []
   }
   return loadLocal()
     .filter(a => a.user_id === userId)
@@ -101,7 +106,7 @@ export async function loadActas(userId) {
 export async function loadActaById(id) {
   if (await hasSession()) {
     const { data, error } = await supabase.from('actas').select('*').eq('id', id).single()
-    if (error) throw error
+    if (error) throw new Error(error.message)
     return data
   }
   return loadLocal().find(a => a.id === id) || null
@@ -110,7 +115,7 @@ export async function loadActaById(id) {
 export async function deleteActa(id) {
   if (await hasSession()) {
     const { error } = await supabase.from('actas').delete().eq('id', id)
-    if (error) throw error
+    if (error) throw new Error(error.message)
     return
   }
   saveLocal(loadLocal().filter(a => a.id !== id))
