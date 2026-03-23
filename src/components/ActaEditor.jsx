@@ -21,9 +21,9 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
   const mountedRef = useRef(false)            // skip first render
 
   const [form, setForm] = useState(() => initialForm ? { ...initialForm } : {
-    numero: '1', fecha: today(), periodo: '', contrato: '',
+    numero: '1', fecha: today(), contrato: '',
     obra: '', ubicacion: '',
-    empresa_c: '', nit_cl: '', director: '', cargo: 'Director de Obra', tel_cl: '',
+    empresa_c: '', nit_cl: '', director: '',
     observaciones: '',
     grupos: [emptyGrupo()],
     fotos: [],
@@ -216,14 +216,11 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
             <div className="grid3" style={{ marginBottom: 10 }}>
               <Field label="Número de acta"><input value={form.numero} onChange={e => sf('numero', e.target.value)} /></Field>
               <Field label="Fecha"><input type="date" value={form.fecha} onChange={e => sf('fecha', e.target.value)} /></Field>
-              <Field label="No. de contrato"><input value={form.contrato} onChange={e => sf('contrato', e.target.value)} placeholder="CON-2025-001" /></Field>
+              <Field label="No. de contrato"><input value={form.contrato} onChange={e => sf('contrato', e.target.value)} /></Field>
             </div>
-            <Field label="Período ejecutado" style={{ marginBottom: 10 }}>
-              <input value={form.periodo} onChange={e => sf('periodo', e.target.value)} placeholder="01/03/2025 – 31/03/2025" />
-            </Field>
             <div className="grid2">
-              <Field label="Nombre / descripción de la obra"><input value={form.obra} onChange={e => sf('obra', e.target.value)} placeholder="Construcción Bodega Industrial" /></Field>
-              <Field label="Ubicación"><input value={form.ubicacion} onChange={e => sf('ubicacion', e.target.value)} placeholder="Ciudad, dirección" /></Field>
+              <Field label="Actividad"><input value={form.obra} onChange={e => sf('obra', e.target.value)} /></Field>
+              <Field label="Ubicación"><input value={form.ubicacion} onChange={e => sf('ubicacion', e.target.value)} /></Field>
             </div>
           </div>
 
@@ -237,19 +234,17 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
               )}
             </div>
             <div className="grid2" style={{ marginBottom: 10 }}>
-              <Field label="Empresa / Razón social"><input value={form.empresa_c} onChange={e => sf('empresa_c', e.target.value)} placeholder="Grupo Constructor S.A.S" /></Field>
-              <Field label="NIT"><input value={form.nit_cl} onChange={e => sf('nit_cl', e.target.value)} placeholder="900.413.588-6" /></Field>
+              <Field label="Empresa / Razón social"><input value={form.empresa_c} onChange={e => sf('empresa_c', e.target.value)} /></Field>
+              <Field label="NIT"><input value={form.nit_cl} onChange={e => sf('nit_cl', e.target.value)} /></Field>
             </div>
-            <div className="grid3">
-              <Field label="Director de obra / Recibe"><input value={form.director} onChange={e => sf('director', e.target.value)} placeholder="Arq. Nombre Apellido" /></Field>
-              <Field label="Cargo"><input value={form.cargo} onChange={e => sf('cargo', e.target.value)} /></Field>
-              <Field label="Teléfono"><input value={form.tel_cl} onChange={e => sf('tel_cl', e.target.value)} /></Field>
-            </div>
+            <Field label="Director de obra">
+              <input value={form.director} onChange={e => sf('director', e.target.value)} />
+            </Field>
           </div>
 
           <div className="card">
             <Field label="Observaciones">
-              <textarea rows={3} value={form.observaciones} onChange={e => sf('observaciones', e.target.value)} placeholder="Notas adicionales..." />
+              <textarea rows={3} value={form.observaciones} onChange={e => sf('observaciones', e.target.value)} />
             </Field>
           </div>
         </div>
@@ -265,7 +260,7 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
                 <input
                   value={grupo.nombre}
                   onChange={e => setGrupoNombre(gi, e.target.value)}
-                  placeholder="Nombre del grupo (ej: Mampostería bodega)"
+                  placeholder="Nombre del grupo"
                   style={{ border: 'none', background: 'transparent', fontWeight: 700, fontSize: 13, flex: 1, padding: '0 4px', outline: 'none' }}
                 />
                 {form.grupos.length > 1 && (
@@ -291,11 +286,11 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
                       const vt = Math.round((parseFloat(act.cant) || 0) * (parseFloat(act.vunit) || 0))
                       return (
                         <tr key={ai}>
-                          <td><input value={act.item} onChange={e => setAct(gi, ai, 'item', e.target.value)} placeholder={`${gi+1}.${ai+1}`} style={{ textAlign: 'center', padding: '4px 5px', fontSize: 11 }} /></td>
-                          <td><input value={act.desc} onChange={e => setAct(gi, ai, 'desc', e.target.value)} placeholder="Descripción" style={{ padding: '4px 6px' }} /></td>
+                          <td><input value={act.item} onChange={e => setAct(gi, ai, 'item', e.target.value)} style={{ textAlign: 'center', padding: '4px 5px', fontSize: 11 }} /></td>
+                          <td><input value={act.desc} onChange={e => setAct(gi, ai, 'desc', e.target.value)} style={{ padding: '4px 6px' }} /></td>
                           <td><input value={act.und} onChange={e => setAct(gi, ai, 'und', e.target.value)} style={{ textAlign: 'center', padding: '4px 4px', fontSize: 11 }} /></td>
-                          <td><input type="number" value={act.cant} onChange={e => setAct(gi, ai, 'cant', e.target.value)} placeholder="0" style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
-                          <td><input type="number" value={act.vunit} onChange={e => setAct(gi, ai, 'vunit', e.target.value)} placeholder="0" style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
+                          <td><input type="number" value={act.cant} onChange={e => setAct(gi, ai, 'cant', e.target.value)} style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
+                          <td><input type="number" value={act.vunit} onChange={e => setAct(gi, ai, 'vunit', e.target.value)} style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
                           <td style={{ textAlign: 'right', padding: '4px 8px', fontWeight: 700, color: vt > 0 ? 'var(--verde)' : 'var(--sub)', whiteSpace: 'nowrap' }}>
                             {vt > 0 ? fmtCOP(vt) : '—'}
                           </td>
