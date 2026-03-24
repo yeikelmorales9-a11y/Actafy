@@ -55,7 +55,10 @@ export default function LandingPage({ onLogin, onRegister }) {
             Actafy
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href="#precios" style={{ fontSize: 13, color: '#1B3A5C', fontWeight: 500, textDecoration: 'none', padding: '8px 12px' }}>
+            Precios
+          </a>
           <button
             onClick={onLogin}
             style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '1px solid #CBD5E0', background: '#fff', cursor: 'pointer', fontWeight: 500 }}
@@ -193,6 +196,128 @@ export default function LandingPage({ onLogin, onRegister }) {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Precios ── */}
+      <section id="precios" style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 24px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 800, color: '#1B3A5C', marginBottom: 8 }}>
+          Planes y precios
+        </h2>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#64748B', marginBottom: 40 }}>
+          Empieza gratis. Actualiza cuando necesites más.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, alignItems: 'start' }}>
+
+          {/* Plan Gratis */}
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: '28px 24px',
+            border: '1px solid #E2EAF4', boxShadow: '0 2px 12px rgba(27,58,92,0.06)',
+          }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Gratis</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
+              <span style={{ fontSize: 36, fontWeight: 800, color: '#1B3A5C', lineHeight: 1 }}>$0</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 24 }}>Para siempre</p>
+            <button
+              onClick={onRegister}
+              style={{ width: '100%', padding: '11px', borderRadius: 9, border: '2px solid #CBD5E0', background: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', marginBottom: 24 }}
+            >
+              Crear cuenta gratis
+            </button>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                '✅ Hasta 5 actas en total',
+                '✅ Exportar en PDF, Excel y Word',
+                '✅ Catálogo de actividades',
+                '✅ Historial de actas',
+                '❌ Logo propio en documentos',
+                '❌ Actas ilimitadas',
+                '❌ Soporte prioritario',
+              ].map(f => (
+                <li key={f} style={{ fontSize: 13, color: f.startsWith('❌') ? '#94A3B8' : '#374151' }}>{f}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Plan Pro — destacado */}
+          <div style={{
+            background: 'linear-gradient(145deg, #1B3A5C 0%, #1e5a8a 100%)',
+            borderRadius: 16, padding: '28px 24px',
+            border: '2px solid #42ABDE',
+            boxShadow: '0 8px 32px rgba(27,58,92,0.25)',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            {/* Badge popular */}
+            <div style={{
+              position: 'absolute', top: 16, right: 16,
+              background: '#42ABDE', color: '#fff',
+              fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+              textTransform: 'uppercase', letterSpacing: '0.05em',
+            }}>
+              Más popular
+            </div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Pro</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
+              <span style={{ fontSize: 36, fontWeight: 800, color: '#fff', lineHeight: 1 }}>$49.900</span>
+            </div>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>COP / mes</p>
+            <button
+              onClick={onRegister}
+              style={{ width: '100%', padding: '11px', borderRadius: 9, border: 'none', background: '#42ABDE', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, boxShadow: '0 4px 12px rgba(66,171,222,0.4)' }}
+            >
+              Empezar 7 días gratis →
+            </button>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                '✅ Actas ilimitadas',
+                '✅ Tu logo en todos los documentos',
+                '✅ PDF, Excel y Word profesional',
+                '✅ Catálogo y clientes ilimitados',
+                '✅ Historial con filtros avanzados',
+                '✅ Soporte por WhatsApp',
+              ].map(f => (
+                <li key={f} style={{ fontSize: 13, color: 'rgba(255,255,255,0.88)' }}>{f}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Plan Empresarial */}
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: '28px 24px',
+            border: '1px solid #E2EAF4', boxShadow: '0 2px 12px rgba(27,58,92,0.06)',
+          }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Empresarial</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
+              <span style={{ fontSize: 36, fontWeight: 800, color: '#1B3A5C', lineHeight: 1 }}>$99.900</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 24 }}>COP / mes</p>
+            <button
+              disabled
+              style={{ width: '100%', padding: '11px', borderRadius: 9, border: '2px solid #E2EAF4', background: '#F8FAFC', fontWeight: 600, fontSize: 13, cursor: 'not-allowed', marginBottom: 24, color: '#94A3B8' }}
+            >
+              Próximamente
+            </button>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                '✅ Todo lo del plan Pro',
+                '✅ Hasta 5 usuarios por empresa',
+                '✅ Panel de administrador',
+                '✅ Reportes consolidados',
+                '✅ Soporte prioritario dedicado',
+                '🔜 Disponible pronto',
+              ].map(f => (
+                <li key={f} style={{ fontSize: 13, color: f.startsWith('🔜') ? '#42ABDE' : '#374151' }}>{f}</li>
+              ))}
+            </ul>
+          </div>
+
+        </div>
+
+        {/* Nota adicional */}
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#94A3B8', marginTop: 28 }}>
+          💳 Sin tarjeta de crédito para el plan gratis · Cancela cuando quieras · Precios en pesos colombianos + IVA
+        </p>
       </section>
 
       {/* ── CTA final ── */}
