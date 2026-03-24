@@ -78,14 +78,19 @@ function RegisterForm({ onSwitch }) {
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
   const submit = async () => {
-    setLoading(true)
     setErr('')
+    if (!f.email.trim())    { setErr('El email es obligatorio'); return }
+    if (f.pass.length < 8)  { setErr('La contraseña debe tener al menos 8 caracteres'); return }
+    if (!/[A-Za-z]/.test(f.pass) || !/[0-9]/.test(f.pass)) {
+      setErr('La contraseña debe tener al menos una letra y un número'); return
+    }
+    if (!f.nombre.trim())   { setErr('El nombre de tu empresa es obligatorio'); return }
+    setLoading(true)
     setMsg('')
     const e = await register(f.email.trim().toLowerCase(), f.pass, f.nombre.trim(), f.nit.trim())
     if (e) {
       setErr(e)
     } else {
-      // Supabase puede requerir confirmación de email
       setMsg('¡Cuenta creada! Si recibes un email de confirmación, ábrelo antes de entrar.')
     }
     setLoading(false)
@@ -102,8 +107,20 @@ function RegisterForm({ onSwitch }) {
           {msg && <div className="alert alert-ok">{msg}</div>}
           <div className="sect-title">Acceso</div>
           <div className="grid2" style={{ marginBottom: 12 }}>
-            <Field label="Email"><input type="email" value={f.email} onChange={e => set('email', e.target.value)} placeholder="tu@email.com" /></Field>
-            <Field label="Contraseña"><input type="password" value={f.pass} onChange={e => set('pass', e.target.value)} /></Field>
+            <Field label="Email">
+              <input type="email" value={f.email} onChange={e => set('email', e.target.value)} placeholder="tu@email.com" />
+            </Field>
+            <Field label="Contraseña">
+              <input
+                type="password" value={f.pass}
+                onChange={e => set('pass', e.target.value)}
+                placeholder="Mín. 8 caracteres"
+                style={{ borderColor: f.pass && f.pass.length < 8 ? 'var(--rojo)' : undefined }}
+              />
+              {f.pass.length > 0 && (
+                <PasswordStrength pass={f.pass} />
+              )}
+            </Field>
           </div>
           <div className="sect-title">Datos de la empresa</div>
           <Field label="Nombre / Razón social" style={{ marginBottom: 10 }}>
@@ -199,7 +216,8 @@ export function ResetPasswordForm() {
   const [done, setDone]       = useState(false)
 
   const submit = async () => {
-    if (!pass || pass.length < 6) { setErr('La contraseña debe tener al menos 6 caracteres'); return }
+    if (!pass || pass.length < 8)  { setErr('La contraseña debe tener al menos 8 caracteres'); return }
+    if (!/[A-Za-z]/.test(pass) || !/[0-9]/.test(pass)) { setErr('Debe tener al menos una letra y un número'); return }
     if (pass !== pass2) { setErr('Las contraseñas no coinciden'); return }
     setLoading(true)
     setErr('')
@@ -227,7 +245,9 @@ export function ResetPasswordForm() {
               </p>
               {err && <div className="alert alert-err">{err}</div>}
               <Field label="Nueva contraseña" style={{ marginBottom: 10 }}>
-                <input type="password" value={pass} onChange={e => setPass(e.target.value)} autoFocus placeholder="Mínimo 6 caracteres" />
+                <input type="password" value={pass} onChange={e => setPass(e.target.value)} autoFocus placeholder="Mín. 8 caracteres con letras y números"
+                  style={{ borderColor: pass && pass.length < 8 ? 'var(--rojo)' : undefined }} />
+                {pass.length > 0 && <PasswordStrength pass={pass} />}
               </Field>
               <Field label="Confirmar contraseña" style={{ marginBottom: 18 }}>
                 <input type="password" value={pass2} onChange={e => setPass2(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
@@ -247,6 +267,35 @@ export function ResetPasswordForm() {
             </>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Indicador de fortaleza de contraseña ───────────────────────────────────
+function PasswordStrength({ pass }) {
+  const hasLen    = pass.length >= 8
+  const hasLetter = /[A-Za-z]/.test(pass)
+  const hasNumber = /[0-9]/.test(pass)
+  const hasSpec   = /[^A-Za-z0-9]/.test(pass)
+  const score     = [hasLen, hasLetter, hasNumber, hasSpec].filter(Boolean).length
+
+  const [color, label] =
+    score <= 1 ? ['var(--rojo)',  'Débil']
+  : score === 2 ? ['#E59B00',    'Regular']
+  : score === 3 ? ['#42ABDE',    'Buena']
+  :               ['var(--verde)','Fuerte']
+
+  return (
+    <div style={{ marginTop: 5 }}>
+      <div style={{ display: 'flex', gap: 3, marginBottom: 3 }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= score ? color : 'var(--borde)', transition: 'background 0.2s' }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--sub)' }}>
+        <span style={{ color }}>Contraseña {label}</span>
+        <span>{!hasLen && '8+ chars · '}{!hasLetter && 'letras · '}{!hasNumber && 'números'}</span>
       </div>
     </div>
   )

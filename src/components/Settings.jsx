@@ -496,11 +496,30 @@ function AiuTab() {
   const [ok, setOk]     = useState(false)
   const [err, setErr]   = useState('')
 
-  const setA = (k, v) => setAiu(x => ({ ...x, [k]: parseFloat(v) || 0 }))
+  const setA = (k, v) => setAiu(x => ({ ...x, [k]: v === '' ? '' : parseFloat(v) ?? 0 }))
 
   const save = async () => {
-    setSaving(true); setErr('')
-    const res = await updateUser({ aiu, iva })
+    setErr('')
+    const checks = [
+      ['Administración', aiu.admin],
+      ['Imprevistos',    aiu.imprevistos],
+      ['Utilidad',       aiu.utilidad],
+      ['IVA',            iva],
+    ]
+    for (const [nombre, val] of checks) {
+      const n = parseFloat(val)
+      if (isNaN(n) || n < 0 || n > 100) {
+        setErr(`${nombre} debe ser un número entre 0 y 100`)
+        return
+      }
+    }
+    const aiuClean = {
+      admin:       parseFloat(aiu.admin),
+      imprevistos: parseFloat(aiu.imprevistos),
+      utilidad:    parseFloat(aiu.utilidad),
+    }
+    setSaving(true)
+    const res = await updateUser({ aiu: aiuClean, iva: parseFloat(iva) })
     setSaving(false)
     if (res.ok) { setOk(true); setTimeout(() => setOk(false), 2500) }
     else setErr(res.error || 'Error al guardar')
@@ -521,10 +540,36 @@ function AiuTab() {
         El IVA aplica sobre la suma del AIU (Administración + Imprevistos + Utilidad).
       </div>
       <div className="grid4" style={{ marginBottom: 20 }}>
-        <Field label="Administración %"><input type="number" value={aiu.admin} onChange={e => setA('admin', e.target.value)} min="0" max="100" /></Field>
-        <Field label="Imprevistos %"><input type="number" value={aiu.imprevistos} onChange={e => setA('imprevistos', e.target.value)} min="0" max="100" /></Field>
-        <Field label="Utilidad %"><input type="number" value={aiu.utilidad} onChange={e => setA('utilidad', e.target.value)} min="0" max="100" /></Field>
-        <Field label="IVA %"><input type="number" value={iva} onChange={e => setIva(parseFloat(e.target.value) || 0)} min="0" max="100" /></Field>
+        {[
+          { label: 'Administración %', val: aiu.admin,       key: 'admin' },
+          { label: 'Imprevistos %',    val: aiu.imprevistos, key: 'imprevistos' },
+          { label: 'Utilidad %',       val: aiu.utilidad,    key: 'utilidad' },
+        ].map(({ label, val, key }) => {
+          const n = parseFloat(val)
+          const invalid = !isNaN(n) && (n < 0 || n > 100)
+          return (
+            <Field key={key} label={label}>
+              <input
+                type="number" value={val} min="0" max="100"
+                onChange={e => setA(key, e.target.value)}
+                style={{ borderColor: invalid ? 'var(--rojo)' : undefined }}
+              />
+              {invalid && <p style={{ fontSize: 10, color: 'var(--rojo)', marginTop: 2 }}>0 – 100</p>}
+            </Field>
+          )
+        })}
+        <Field label="IVA %">
+          {(() => {
+            const n = parseFloat(iva)
+            const invalid = !isNaN(n) && (n < 0 || n > 100)
+            return <>
+              <input type="number" value={iva} min="0" max="100"
+                onChange={e => setIva(e.target.value)}
+                style={{ borderColor: invalid ? 'var(--rojo)' : undefined }} />
+              {invalid && <p style={{ fontSize: 10, color: 'var(--rojo)', marginTop: 2 }}>0 – 100</p>}
+            </>
+          })()}
+        </Field>
       </div>
 
       <div className="sect-title">Vista previa (sobre $ 1.000.000 de actividades)</div>

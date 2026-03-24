@@ -316,14 +316,16 @@ export default function ActaEditor({ onSettings, onLogout, onBack, onNew, initia
                   </thead>
                   <tbody>
                     {grupo.acts.map((act, ai) => {
-                      const vt = Math.round((parseFloat(act.cant) || 0) * (parseFloat(act.vunit) || 0))
+                      const cant  = Math.max(0, parseFloat(act.cant)  || 0)
+                      const vunit = Math.max(0, parseFloat(act.vunit) || 0)
+                      const vt    = Math.round(cant * vunit)
                       return (
                         <tr key={ai}>
                           <td><input value={act.item} onChange={e => setAct(gi, ai, 'item', e.target.value)} style={{ textAlign: 'center', padding: '4px 5px', fontSize: 11 }} /></td>
                           <td><input value={act.desc} onChange={e => setAct(gi, ai, 'desc', e.target.value)} style={{ padding: '4px 6px' }} /></td>
                           <td><input value={act.und} onChange={e => setAct(gi, ai, 'und', e.target.value)} style={{ textAlign: 'center', padding: '4px 4px', fontSize: 11 }} /></td>
-                          <td><input type="number" value={act.cant} onChange={e => setAct(gi, ai, 'cant', e.target.value)} style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
-                          <td><input type="number" value={act.vunit} onChange={e => setAct(gi, ai, 'vunit', e.target.value)} style={{ textAlign: 'right', padding: '4px 5px' }} /></td>
+                          <td><input type="number" min="0" value={act.cant}  onChange={e => setAct(gi, ai, 'cant',  e.target.value)} style={{ textAlign: 'right', padding: '4px 5px', borderColor: parseFloat(act.cant)  < 0 ? 'var(--rojo)' : undefined }} /></td>
+                          <td><input type="number" min="0" value={act.vunit} onChange={e => setAct(gi, ai, 'vunit', e.target.value)} style={{ textAlign: 'right', padding: '4px 5px', borderColor: parseFloat(act.vunit) < 0 ? 'var(--rojo)' : undefined }} /></td>
                           <td style={{ textAlign: 'right', padding: '4px 8px', fontWeight: 700, color: vt > 0 ? 'var(--verde)' : 'var(--sub)', whiteSpace: 'nowrap' }}>
                             {vt > 0 ? fmtCOP(vt) : '—'}
                           </td>
