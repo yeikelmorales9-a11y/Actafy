@@ -621,28 +621,36 @@ export async function exportExcel(d) {
   })
 
   // ── E. FIRMAS ────────────────────────────────────────────────────────────────
-  // Estructura: [banda] → espacio vacío → [LÍNEA] → nombre → etiqueta → [banda]
+  // Estructura: [banda] → espacio → línea izq | GAP col-C | línea der → nombre → etiqueta → [banda]
   ws.addRow([])   // espacio
 
   // Banda superior
   addBand()
   ws.getRow(ws.rowCount).height = 8
 
-  // Fila vacía: espacio para escribir la firma (encima de la línea)
+  // Fila vacía: espacio para la firma (sin bordes)
   const spaceRow = ws.addRow(['', '', '', '', '', ''])
-  const spRn = ws.rowCount
+  const spRn     = ws.rowCount
   spaceRow.height = 28
-  ws.mergeCells(`A${spRn}:C${spRn}`)
-  ws.mergeCells(`D${spRn}:F${spRn}`)
-  // sin borde ni texto — solo espacio
+  // sin mergeCells ni bordes — solo altura
 
-  // Fila de nombres: borde SUPERIOR = línea de firma; nombre centrado debajo
+  // Fila de LÍNEAS: borde inferior en A:B (izq) y D:E (der); C y F quedan sin borde = hueco visual
+  const lineRow = ws.addRow(['', '', '', '', '', ''])
+  const lineRn  = ws.rowCount
+  lineRow.height = 3
+  ws.getCell(`A${lineRn}`).border = { bottom: bdM() }
+  ws.getCell(`B${lineRn}`).border = { bottom: bdM() }
+  // C sin borde → gap entre las dos líneas
+  ws.getCell(`D${lineRn}`).border = { bottom: bdM() }
+  ws.getCell(`E${lineRn}`).border = { bottom: bdM() }
+  // F sin borde → margen derecho
+
+  // Fila de NOMBRES (debajo de la línea)
   const nameRow = ws.addRow(['', '', '', '', '', ''])
   const nameRn  = ws.rowCount
-  nameRow.height = 16
-  ws.mergeCells(`A${nameRn}:C${nameRn}`)
-  ws.mergeCells(`D${nameRn}:F${nameRn}`)
-
+  nameRow.height = 15
+  ws.mergeCells(`A${nameRn}:B${nameRn}`)   // zona izquierda
+  ws.mergeCells(`D${nameRn}:E${nameRn}`)   // zona derecha
   const nA = ws.getCell(`A${nameRn}`)
   const nD = ws.getCell(`D${nameRn}`)
   nA.value     = d.director    || '—'
@@ -651,15 +659,13 @@ export async function exportExcel(d) {
   nD.font      = fnt(true, DARK, 9)
   nA.alignment = aln('center', 'middle')
   nD.alignment = aln('center', 'middle')
-  nA.border    = { top: bdM() }   // ← la línea queda ENCIMA del nombre
-  nD.border    = { top: bdM() }
 
-  // Etiquetas de cargo
+  // Fila de ETIQUETAS
   const lblRow = ws.addRow(['', '', '', '', '', ''])
   const lblRn  = ws.rowCount
-  lblRow.height = 14
-  ws.mergeCells(`A${lblRn}:C${lblRn}`)
-  ws.mergeCells(`D${lblRn}:F${lblRn}`)
+  lblRow.height = 13
+  ws.mergeCells(`A${lblRn}:B${lblRn}`)
+  ws.mergeCells(`D${lblRn}:E${lblRn}`)
   const lA = ws.getCell(`A${lblRn}`)
   const lD = ws.getCell(`D${lblRn}`)
   lA.value     = 'RECIBE'
