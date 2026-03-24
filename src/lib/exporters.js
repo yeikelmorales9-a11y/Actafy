@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { saveAs } from 'file-saver'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, BorderStyle, AlignmentType, ShadingType,
@@ -426,44 +426,183 @@ export async function exportWord(d) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  EXCEL  —  mismo formato original
+//  EXCEL  —  formato profesional idéntico al PDF (ExcelJS)
 // ─────────────────────────────────────────────────────────────────────────────
-export function exportExcel(d) {
-  const rows = []
-  rows.push([(d.contratista||'').toUpperCase(), '', '', '', '', ''])
-  rows.push([`NIT: ${d.nit_c||''}`, '', '', '', '', ''])
-  rows.push([`Fecha: ${fmtFecha(d.fecha)}`, '', '', '', '', ''])
-  rows.push([`N° de Acta: ${d.numero}${d.contrato ? ' ('+d.contrato+')' : ''}`, '', '', '', '', ''])
-  rows.push([`Cliente: ${(d.cliente||'').toUpperCase()}`, '', `ACTIVIDAD: ${(d.tipo||'OBRA CIVIL').toUpperCase()}`, '', '', ''])
-  rows.push([`NIT: ${d.nit_cl||''}`, '', '', '', '', ''])
-  rows.push([''])
-  rows.push(['Item', 'Descripción', 'UND', 'Cantidad', 'Precio Unitario', 'Precio Gral.'])
+export async function exportExcel(d) {
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Actafy'
+  const ws   = wb.addWorksheet(`ACTA ${d.numero}`)
 
-  let gNum = 0
-  d.grupos.forEach((g) => {
-    gNum++
-    rows.push([`${gNum}.0  ${(g.nombre||'').toUpperCase()}`, '', '', '', '', ''])
-    g.acts.filter(a => a.desc).forEach((a) => {
-      const vt = Math.round((parseFloat(a.cant)||0) * (parseFloat(a.vunit)||0))
-      rows.push([a.item, a.desc, a.und, parseFloat(a.cant)||0, parseFloat(a.vunit)||0, vt])
-    })
-    rows.push([''])
+  // ── Paleta ─────────────────────────────────────────────────────────────
+  const DARK  = '141E32'
+  const WHITE = 'FFFFFF'
+  const LIGHT = 'F5F6F8'
+  const BORD  = '50596E'
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  const bdM  = () => ({ style: 'medium', color: { argb: DARK } })
+  const bdT  = () => ({ style: 'thin',   color: { argb: BORD } })
+  const bAll = () => ({ top: bdT(), bottom: bdT(), left: bdT(), right: bdT() })
+  const fnt  = (bold = false, color = '141414', size = 9) =>
+    ({ name: 'Arial', size, bold, color: { argb: color } })
+  const bg   = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
+  const aln  = (h = 'left', v = 'middle') => ({ horizontal: h, vertical: v })
+
+  // ── Anchos de columna ────────────────────────────────────────────────────
+  ws.columns = [
+    { width: 8  },   // A: Item
+    { width: 46 },   // B: Descripción
+    { width: 8  },   // C: UND
+    { width: 11 },   // D: Cantidad
+    { width: 20 },   // E: Precio Unitario
+    { width: 20 },   // F: Precio Gral.
+  ]
+
+  // ── A. HEADER (filas 1-6) ───────────────────────────────────────────────
+  const hdrLines = [
+    { left: (d.contratista || '—').toUpperCase(), right: '', bold: true,  size: 12, h: 22 },
+    { left: `NIT: ${d.nit_c || '—'}`,            right: '',              size: 9,  h: 15 },
+    { left: `Fecha: ${fmtFecha(d.fecha)}`,        right: '',              size: 9,  h: 15 },
+    { left: `N° de Acta: ${d.numero}${d.contrato ? '  (' + d.contrato + ')' : ''}`, right: '', size: 9, h: 15 },
+    { left: `Cliente: ${(d.cliente || '—').toUpperCase()}`, right: `ACTIVIDAD: ${(d.tipo || 'OBRA CIVIL').toUpperCase()}`, bold: true, size: 9, h: 15 },
+    { left: `NIT: ${d.nit_cl || '—'}`,            right: '',              size: 9,  h: 15 },
+  ]
+
+  hdrLines.forEach(({ left, right, bold = false, size = 9, h = 15 }, i) => {
+    const row = ws.addRow([left, '', '', '', right, ''])
+    const rn  = ws.rowCount
+    row.height = h
+
+    ws.mergeCells(`A${rn}:D${rn}`)
+    ws.mergeCells(`E${rn}:F${rn}`)
+
+    const cA = ws.getCell(`A${rn}`)
+    const cE = ws.getCell(`E${rn}`)
+
+    cA.font      = fnt(bold, DARK, size)
+    cA.alignment = aln('left')
+    cE.font      = fnt(true, DARK, 9)
+    cE.alignment = aln('right')
+
+    // Borde exterior del bloque header
+    const isTop = i === 0; const isBot = i === 5
+    for (let c = 1; c <= 6; c++) {
+      const cell = ws.getCell(rn, c)
+      cell.border = {
+        top:    isTop ? bdM() : undefined,
+        bottom: isBot ? bdM() : undefined,
+        left:   c === 1 ? bdM() : c === 5 ? bdT() : undefined,
+        right:  c === 6 ? bdM() : c === 4 ? bdT() : undefined,
+      }
+    }
   })
 
+  // Logo como imagen (si existe)
+  if (d.logo) {
+    try {
+      const b64  = d.logo.includes(',') ? d.logo.split(',')[1] : d.logo
+      const ext  = d.logo.startsWith('data:image/png') ? 'png' : 'jpeg'
+      const imgId = wb.addImage({ base64: b64, extension: ext })
+      ws.addImage(imgId, { tl: { col: 4, row: 0 }, br: { col: 6, row: 6 }, editAs: 'oneCell' })
+    } catch {}
+  }
+
+  ws.addRow([])  // Fila vacía separadora
+
+  // ── B. ENCABEZADO DE TABLA ───────────────────────────────────────────────
+  const thRow = ws.addRow(['Item', 'Descripción', 'UND', 'Cantidad', 'Precio Unitario', 'Precio Gral.'])
+  thRow.height = 20
+  thRow.eachCell((cell) => {
+    cell.fill      = bg(DARK)
+    cell.font      = fnt(true, WHITE)
+    cell.border    = bAll()
+    cell.alignment = aln('center')
+  })
+
+  // ── C. ACTIVIDADES ───────────────────────────────────────────────────────
+  let gNum = 0; let alt = false
+
+  d.grupos.forEach((g) => {
+    gNum++
+    // Fila de grupo
+    const gRow = ws.addRow([`${gNum}.0  ${(g.nombre || '').toUpperCase()}`, '', '', '', '', ''])
+    const gRn  = ws.rowCount
+    ws.mergeCells(`A${gRn}:F${gRn}`)
+    gRow.height = 18
+    const gCell = ws.getCell(`A${gRn}`)
+    gCell.fill      = bg(DARK)
+    gCell.font      = fnt(true, WHITE)
+    gCell.border    = bAll()
+    gCell.alignment = aln('left')
+    alt = false
+
+    // Items del grupo
+    g.acts.filter(a => a.desc).forEach((a) => {
+      const vt   = Math.round((parseFloat(a.cant) || 0) * (parseFloat(a.vunit) || 0))
+      const rowBg = alt ? LIGHT : WHITE
+      const row  = ws.addRow([
+        a.item || '', a.desc || '', a.und || '',
+        parseFloat(a.cant) || 0,
+        parseFloat(a.vunit) || 0,
+        vt,
+      ])
+      row.height = 16
+
+      row.eachCell({ includeEmpty: true }, (cell, ci) => {
+        cell.fill   = bg(rowBg)
+        cell.font   = fnt()
+        cell.border = bAll()
+        if (ci === 1 || ci === 3) cell.alignment = aln('center')
+        else if (ci === 4)        { cell.alignment = aln('right'); cell.numFmt = '#,##0.00' }
+        else if (ci === 5 || ci === 6) { cell.alignment = aln('right'); cell.numFmt = '#,##0' }
+        else                      cell.alignment = aln('left')
+      })
+      alt = !alt
+    })
+  })
+
+  ws.addRow([])  // Separador
+
+  // ── D. TOTALES (columnas E-F) ────────────────────────────────────────────
   const T = d.totals; const aiu = d.aiu
-  rows.push(['', '', '', '', 'Total Bruto',                          T.bruto])
-  rows.push(['', '', '', '', `ADMINISTRACION ${aiu.admin||10}%`,    T.admV ])
-  rows.push(['', '', '', '', `IMPREVISTOS ${aiu.imprevistos||3}%`,  T.impV ])
-  rows.push(['', '', '', '', `UTILIDAD ${aiu.utilidad||10}%`,       T.utiV ])
-  rows.push(['', '', '', '', `IVA ${d.iva||19}%`,                   T.ivaV ])
-  rows.push(['', '', '', '', 'TOTAL',                                T.total])
-  rows.push([''])
-  rows.push([`RECIBE: ${d.director||''}`, '', '', `CONTRATISTA: ${d.contratista||''}`, '', ''])
+  const totLines = [
+    { lbl: 'Total Bruto',                          val: T.bruto,  bold: false },
+    { lbl: `ADMINISTRACION ${aiu.admin    || 10}%`, val: T.admV,  bold: false },
+    { lbl: `IMPREVISTOS ${aiu.imprevistos || 3}%`,  val: T.impV,  bold: false },
+    { lbl: `UTILIDAD ${aiu.utilidad       || 10}%`, val: T.utiV,  bold: false },
+    { lbl: `IVA ${d.iva                   || 19}%`, val: T.ivaV,  bold: false },
+    { lbl: 'TOTAL',                                 val: T.total, bold: true  },
+  ]
 
-  const ws = XLSX.utils.aoa_to_sheet(rows)
-  ws['!cols'] = [{ wch: 8 }, { wch: 52 }, { wch: 8 }, { wch: 10 }, { wch: 22 }, { wch: 18 }]
+  totLines.forEach(({ lbl, val, bold }, i) => {
+    const rowBg = bold ? DARK : (i % 2 === 0 ? WHITE : LIGHT)
+    const color  = bold ? WHITE : '141414'
+    const row    = ws.addRow(['', '', '', '', lbl, val])
+    const rn     = ws.rowCount
+    row.height   = 18
+    ws.mergeCells(`A${rn}:D${rn}`)
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, `ACTA #${d.numero}`)
-  XLSX.writeFile(wb, filename(d, 'xlsx'))
+    const cL = ws.getCell(`E${rn}`)
+    const cV = ws.getCell(`F${rn}`)
+    cL.fill      = bg(rowBg);  cV.fill      = bg(rowBg)
+    cL.font      = fnt(bold, color); cV.font = fnt(true, color)
+    cL.border    = bAll();     cV.border    = bAll()
+    cL.alignment = aln('right'); cV.alignment = aln('right')
+    cV.numFmt    = '#,##0'
+  })
+
+  // ── E. FIRMAS ────────────────────────────────────────────────────────────
+  ws.addRow([])
+  const sigRow = ws.addRow([`RECIBE: ${d.director || '—'}`, '', '', '', `CONTRATISTA: ${d.contratista || '—'}`, ''])
+  const sigRn  = ws.rowCount
+  ws.mergeCells(`A${sigRn}:D${sigRn}`)
+  ws.mergeCells(`E${sigRn}:F${sigRn}`)
+  sigRow.getCell(1).font = fnt(false, '141414', 9)
+  sigRow.getCell(5).font = fnt(false, '141414', 9)
+  sigRow.getCell(5).alignment = aln('right')
+
+  // ── GUARDAR ──────────────────────────────────────────────────────────────
+  const buffer = await wb.xlsx.writeBuffer()
+  const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  saveAs(blob, filename(d, 'xlsx'))
 }
