@@ -36,12 +36,20 @@ export default function LandingPage({ onLogin, onRegister }) {
   const ctaRef       = useReveal(0.15)
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden', background: '#F7FBFF', position: 'relative' }}>
+
+      {/* ── Mesh gradient background ─────────────────────────────────────────── */}
+      <div className="ld-orb-wrap" aria-hidden="true">
+        <div className="ld-orb ld-orb-1" />
+        <div className="ld-orb ld-orb-2" />
+        <div className="ld-orb ld-orb-3" />
+        <div className="ld-orb ld-orb-4" />
+      </div>
 
       {/* ── Navbar ───────────────────────────────────────────────────────────── */}
       <nav className="ld-nav" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 24px', maxWidth: 960, margin: '0 auto',
+        padding: '14px 24px', maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="32" height="32" viewBox="0 0 100 100">
@@ -78,7 +86,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
-      <section style={{ textAlign: 'center', padding: '60px 24px 50px', maxWidth: 680, margin: '0 auto' }}>
+      <section style={{ textAlign: 'center', padding: '60px 24px 50px', maxWidth: 680, margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
         {/* Logo flota suavemente */}
         <div className="ld-hero-0 ld-float" style={{ display: 'inline-block' }}>
@@ -134,7 +142,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       <section
         ref={mockupRef}
         className="ld-reveal"
-        style={{ maxWidth: 800, margin: '0 auto 60px', padding: '0 24px' }}
+        style={{ maxWidth: 800, margin: '0 auto 60px', padding: '0 24px', position: 'relative', zIndex: 1 }}
       >
         <div style={{
           background: 'white', borderRadius: 16, padding: '24px',
@@ -196,7 +204,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       </section>
 
       {/* ── Características ──────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 900, margin: '0 auto 70px', padding: '0 24px' }}>
+      <section style={{ maxWidth: 900, margin: '0 auto 70px', padding: '0 24px', position: 'relative', zIndex: 1 }}>
         <h2
           ref={featTitleRef}
           className="ld-reveal"
@@ -229,7 +237,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       </section>
 
       {/* ── Precios ──────────────────────────────────────────────────────────── */}
-      <section id="precios" style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 24px' }}>
+      <section id="precios" style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 24px', position: 'relative', zIndex: 1 }}>
         <h2
           ref={pricTitleRef}
           className="ld-reveal"
