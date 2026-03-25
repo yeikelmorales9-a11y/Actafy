@@ -341,6 +341,105 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   border-top: 1px solid var(--borde);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMACIONES — Landing Page
+   Solo opacity + transform (composited, sin reflow ni repaint)
+   Respeta prefers-reduced-motion para accesibilidad
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes ldFadeUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes ldFloat {
+  0%, 100% { transform: translateY(0);   }
+  50%      { transform: translateY(-7px); }
+}
+@keyframes ldPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(66,171,222,.45); }
+  50%      { box-shadow: 0 4px 30px rgba(66,171,222,.80); }
+}
+@keyframes ldSlideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Hero entrance (al montar la página) ── */
+.ld-hero-0 { animation: ldFadeUp  .65s cubic-bezier(.22,.68,0,1.15) both; }
+.ld-hero-1 { animation: ldFadeUp  .65s cubic-bezier(.22,.68,0,1.15) .13s both; }
+.ld-hero-2 { animation: ldFadeUp  .65s cubic-bezier(.22,.68,0,1.15) .28s both; }
+.ld-nav    { animation: ldFadeUp  .5s  cubic-bezier(.22,.68,0,1.15) both; }
+
+/* ── Loops sutiles ── */
+.ld-float  { animation: ldFloat 4.5s ease-in-out infinite; }
+.ld-pulse  { animation: ldPulse 2.8s ease-in-out infinite; }
+
+/* ── Scroll reveal — clase base (invisible hasta entrar al viewport) ── */
+.ld-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .55s ease, transform .55s cubic-bezier(.22,.68,0,1.1);
+}
+.ld-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Stagger: el contenedor recibe .visible, los hijos se revelan en cascada ── */
+.ld-stagger .ld-item {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .5s ease, transform .5s cubic-bezier(.22,.68,0,1.1);
+}
+.ld-stagger.visible .ld-item:nth-child(1) { opacity:1; transform:translateY(0); transition-delay: .00s; }
+.ld-stagger.visible .ld-item:nth-child(2) { opacity:1; transform:translateY(0); transition-delay: .09s; }
+.ld-stagger.visible .ld-item:nth-child(3) { opacity:1; transform:translateY(0); transition-delay: .18s; }
+.ld-stagger.visible .ld-item:nth-child(4) { opacity:1; transform:translateY(0); transition-delay: .27s; }
+.ld-stagger.visible .ld-item:nth-child(5) { opacity:1; transform:translateY(0); transition-delay: .36s; }
+.ld-stagger.visible .ld-item:nth-child(6) { opacity:1; transform:translateY(0); transition-delay: .45s; }
+
+/* ── Hover: feature cards ── */
+.ld-feat {
+  transition: transform .18s ease, box-shadow .18s ease !important;
+}
+.ld-feat:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 14px 32px rgba(27,58,92,.14) !important;
+}
+
+/* ── Hover: plan cards ── */
+.ld-plan {
+  transition: transform .2s ease, box-shadow .2s ease !important;
+}
+.ld-plan:hover { transform: translateY(-5px) !important; }
+
+/* ── Microinteracción: botones landing ── */
+.ld-btn {
+  transition: transform .14s ease, box-shadow .14s ease, background .15s ease !important;
+  will-change: transform;
+}
+.ld-btn:hover  { transform: translateY(-2px) !important; }
+.ld-btn:active { transform: translateY(1px) scale(.97) !important; }
+
+/* ── Focus visible para accesibilidad ── */
+.ld-btn:focus-visible {
+  outline: 2px solid #42ABDE;
+  outline-offset: 3px;
+}
+
+/* ── Respeta preferencia de sin movimiento ── */
+@media (prefers-reduced-motion: reduce) {
+  .ld-hero-0, .ld-hero-1, .ld-hero-2, .ld-nav,
+  .ld-float,  .ld-pulse,
+  .ld-reveal, .ld-stagger .ld-item,
+  .ld-feat,   .ld-plan,   .ld-btn {
+    animation:  none !important;
+    transition: none !important;
+    opacity:    1    !important;
+    transform:  none !important;
+  }
+}
+
 /* ── Responsive móvil ─────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
