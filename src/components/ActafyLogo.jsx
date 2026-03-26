@@ -4,7 +4,7 @@ export default function ActafyLogo({ size = 90, showText = true, showSub = true 
   return (
     <div style={{ textAlign: 'center', userSelect: 'none' }}>
       {/* Ícono SVG */}
-      <svg width={s} height={s} viewBox="0 0 100 100" style={{ display: 'block', margin: '0 auto' }}>
+      <svg width={s} height={s} viewBox="0 0 100 100" style={{ display: 'block', margin: '0 auto', marginBottom: -s * 0.09 }}>
         {/* Sombra suave */}
         <circle cx="50" cy="53" r="44" fill="rgba(66,171,222,0.18)" />
 
@@ -39,7 +39,7 @@ export default function ActafyLogo({ size = 90, showText = true, showSub = true 
           fontSize: s * 0.36,
           fontWeight: 400,
           color: '#1a1a1a',
-          marginTop: s * 0.04,
+          marginTop: 0,
           lineHeight: 1,
           letterSpacing: '-0.5px',
         }}>
