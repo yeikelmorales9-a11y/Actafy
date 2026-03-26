@@ -39,7 +39,7 @@ export default function ActafyLogo({ size = 90, showText = true, showSub = true 
           fontSize: s * 0.36,
           fontWeight: 400,
           color: '#1a1a1a',
-          marginTop: s * 0.12,
+          marginTop: s * 0.04,
           lineHeight: 1,
           letterSpacing: '-0.5px',
         }}>
