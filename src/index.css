@@ -369,24 +369,60 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   50%     { transform: translate(-60px, 80px)  scale(1.1);  }
 }
 
-/* ── Fondo animado landing: patrón de puntos en movimiento diagonal ── */
-@keyframes patternDrift {
-  from { background-position: 0px 0px;   }
-  to   { background-position: 36px 36px; }
+/* ── Animaciones fondo landing: burbujas + olas ───────────────────── */
+
+@keyframes bubbleRise {
+  0%   { transform: translateY(0)       scale(1);    opacity: 0;   }
+  8%   {                                              opacity: 0.55;}
+  85%  {                                              opacity: 0.35;}
+  100% { transform: translateY(-108vh)  scale(1.15); opacity: 0;   }
 }
 
-.ld-page {
-  position: relative;
-  background-color: #f0f7ff;
-  background-image: radial-gradient(circle, rgba(27,90,180,0.18) 1.5px, transparent 1.5px);
-  background-size: 36px 36px;
-  animation: patternDrift 6s linear infinite;
-  /* No afecta nada más — solo el fondo del div */
+@keyframes waveSlide {
+  from { transform: translateX(0);    }
+  to   { transform: translateX(-50%); }
 }
 
-/* Ya no se usan — mantener vacíos para no romper JSX */
-.ld-orb-wrap { display: none; }
-.ld-orb      { display: none; }
+/* El landing cubre el body gradient */
+.ld-page { position: relative; background: #ffffff; }
+
+/* Contenedor absoluto de fondo (detrás de todo el contenido) */
+.ld-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Burbuja individual */
+.ld-bbl {
+  position: absolute;
+  bottom: -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(66,171,222,0.60),
+    rgba(66,171,222,0.20) 55%,
+    transparent 75%);
+  border: 1.5px solid rgba(66,171,222,0.40);
+  animation: bubbleRise linear infinite;
+  will-change: transform, opacity;
+}
+
+/* Olas SVG */
+.ld-wave {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 200%;
+  height: 170px;
+  will-change: transform;
+}
+.ld-wave-a { fill: rgba(66,171,222,0.18); animation: waveSlide 14s linear infinite;         }
+.ld-wave-b { fill: rgba(27, 90,180,0.11); animation: waveSlide 10s linear infinite reverse; bottom: 12px; }
+.ld-wave-c { fill: rgba(120,200,240,0.12);animation: waveSlide 18s linear infinite;         bottom: -8px; }
+
+/* Todo el contenido del landing va por encima del fondo */
+.ld-page > *:not(.ld-bg) { position: relative; z-index: 1; }
 
 @keyframes ldFadeUp {
   from { opacity: 0; transform: translateY(26px); }
@@ -473,14 +509,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   .ld-hero-0, .ld-hero-1, .ld-hero-2, .ld-nav,
   .ld-float,  .ld-pulse,
   .ld-reveal, .ld-stagger .ld-item,
-  .ld-feat,   .ld-plan,   .ld-btn,
-  .ld-orb {
+  .ld-feat,   .ld-plan,   .ld-btn {
     animation:  none !important;
     transition: none !important;
     opacity:    1    !important;
     transform:  none !important;
   }
-  .ld-orb-wrap { display: none; }
+  .ld-bg { display: none; }
 }
 
 /* ── Responsive móvil ─────────────────────────────────────────────────────── */

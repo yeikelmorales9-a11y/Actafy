@@ -36,14 +36,40 @@ export default function LandingPage({ onLogin, onRegister }) {
   const ctaRef       = useReveal(0.15)
 
   return (
-    <div className="ld-page" style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden', background: '#ffffff' }}>
+    <div className="ld-page" style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden', background: '#ffffff', position: 'relative' }}>
 
-      {/* ── Mesh gradient background ─────────────────────────────────────────── */}
-      <div className="ld-orb-wrap" aria-hidden="true">
-        <div className="ld-orb ld-orb-1" />
-        <div className="ld-orb ld-orb-2" />
-        <div className="ld-orb ld-orb-3" />
-        <div className="ld-orb ld-orb-4" />
+      {/* ── Fondo animado: burbujas + olas ───────────────────────────────────── */}
+      <div className="ld-bg" aria-hidden="true">
+
+        {/* Burbujas que suben */}
+        {[
+          { w:50,  left:'5%',   dur:'11s', del:'0s'  },
+          { w:28,  left:'14%',  dur:'16s', del:'3s'  },
+          { w:70,  left:'26%',  dur:'13s', del:'6s'  },
+          { w:22,  left:'38%',  dur:'9s',  del:'1s'  },
+          { w:55,  left:'52%',  dur:'14s', del:'4s'  },
+          { w:35,  left:'63%',  dur:'10s', del:'7s'  },
+          { w:65,  left:'74%',  dur:'18s', del:'2s'  },
+          { w:20,  left:'84%',  dur:'8s',  del:'5s'  },
+          { w:42,  left:'92%',  dur:'12s', del:'9s'  },
+        ].map(({ w, left, dur, del }, i) => (
+          <div key={i} className="ld-bbl" style={{
+            width: w, height: w, left,
+            animationDuration: dur, animationDelay: del,
+          }} />
+        ))}
+
+        {/* Olas en la parte inferior */}
+        <svg className="ld-wave ld-wave-a" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,80 C240,140 480,20 720,80 C960,140 1200,20 1440,80 C1680,140 1920,20 2160,80 C2400,140 2640,20 2880,80 L2880,160 L0,160 Z"/>
+        </svg>
+        <svg className="ld-wave ld-wave-b" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,100 C360,40 720,130 1080,70 C1440,10 1800,110 2160,60 C2520,10 2700,90 2880,100 L2880,160 L0,160 Z"/>
+        </svg>
+        <svg className="ld-wave ld-wave-c" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,50 C180,110 360,20 540,80 C720,140 900,30 1080,90 C1260,150 1440,40 1620,100 C1800,160 1980,50 2160,110 C2340,170 2640,60 2880,50 L2880,160 L0,160 Z"/>
+        </svg>
+
       </div>
 
       {/* ── Navbar ───────────────────────────────────────────────────────────── */}
