@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
 
     // Seguridad: si onAuthStateChange nunca dispara (red caída, proyecto pausado,
     // credenciales inválidas) forzamos loading=false después de 8 segundos
-    const safetyTimer = setTimeout(() => setLoading(false), 8000)
+    const safetyTimer = setTimeout(() => setLoading(false), 4000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // ⚠️  NO cancelar el timer aquí: fetchProfile puede colgarse si Supabase
