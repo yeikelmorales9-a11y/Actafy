@@ -369,60 +369,68 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   50%     { transform: translate(-60px, 80px)  scale(1.1);  }
 }
 
-/* ── Animaciones fondo landing: burbujas + olas ───────────────────── */
+/* ── Fondo animado landing: burbujas flotantes + olas SVG ─────────── */
 
 @keyframes bubbleRise {
-  0%   { transform: translateY(0)       scale(1);    opacity: 0;   }
-  8%   {                                              opacity: 0.55;}
-  85%  {                                              opacity: 0.35;}
-  100% { transform: translateY(-108vh)  scale(1.15); opacity: 0;   }
+  0%   { transform: translateY(0)      scale(1);    opacity: 0;    }
+  10%  {                                             opacity: 0.7;  }
+  80%  {                                             opacity: 0.45; }
+  100% { transform: translateY(-105vh) scale(1.2);  opacity: 0;    }
 }
-
 @keyframes waveSlide {
   from { transform: translateX(0);    }
   to   { transform: translateX(-50%); }
 }
 
-/* El landing cubre el body gradient */
-.ld-page { position: relative; background: #ffffff; }
+/* Landing page — fondo blanco base, contenido encima del .ld-bg */
+.ld-page {
+  position: relative;
+  background: #ffffff;
+}
+.ld-page > *:not(.ld-bg) {
+  position: relative;
+  z-index: 2;
+}
 
-/* Contenedor absoluto de fondo (detrás de todo el contenido) */
+/* Contenedor fijo — cubre el viewport completo siempre */
 .ld-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background: #f4faff;   /* fondo azul muy pálido visible */
 }
 
-/* Burbuja individual */
+/* Burbuja */
 .ld-bbl {
   position: absolute;
-  bottom: -90px;
+  bottom: -100px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%,
-    rgba(66,171,222,0.60),
-    rgba(66,171,222,0.20) 55%,
-    transparent 75%);
-  border: 1.5px solid rgba(66,171,222,0.40);
+    rgba(66,171,222,0.75) 0%,
+    rgba(66,171,222,0.30) 50%,
+    transparent 72%);
+  border: 2px solid rgba(66,171,222,0.55);
   animation: bubbleRise linear infinite;
   will-change: transform, opacity;
 }
 
-/* Olas SVG */
+/* Olas — bottom del viewport (position: fixed del padre) */
 .ld-wave {
   position: absolute;
   bottom: 0; left: 0;
-  width: 200%;
-  height: 170px;
+  width: 200%; height: 160px;
   will-change: transform;
 }
-.ld-wave-a { fill: rgba(66,171,222,0.18); animation: waveSlide 14s linear infinite;         }
-.ld-wave-b { fill: rgba(27, 90,180,0.11); animation: waveSlide 10s linear infinite reverse; bottom: 12px; }
-.ld-wave-c { fill: rgba(120,200,240,0.12);animation: waveSlide 18s linear infinite;         bottom: -8px; }
+.ld-wave-a { animation: waveSlide 14s linear infinite;         }
+.ld-wave-b { animation: waveSlide 10s linear infinite reverse; bottom: 14px; }
+.ld-wave-c { animation: waveSlide 18s linear infinite;         bottom: -6px; }
 
-/* Todo el contenido del landing va por encima del fondo */
-.ld-page > *:not(.ld-bg) { position: relative; z-index: 1; }
+/* Colores visibles en las olas */
+.ld-wave-a path { fill: rgba(66,171,222,0.28); }
+.ld-wave-b path { fill: rgba(27, 90,180,0.18); }
+.ld-wave-c path { fill: rgba(120,200,240,0.20); }
 
 @keyframes ldFadeUp {
   from { opacity: 0; transform: translateY(26px); }

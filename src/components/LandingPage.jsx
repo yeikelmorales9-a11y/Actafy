@@ -36,7 +36,7 @@ export default function LandingPage({ onLogin, onRegister }) {
   const ctaRef       = useReveal(0.15)
 
   return (
-    <div className="ld-page" style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden', background: '#ffffff', position: 'relative' }}>
+    <div className="ld-page" style={{ minHeight: '100vh', fontFamily: 'inherit', overflowX: 'hidden' }}>
 
       {/* ── Fondo animado: burbujas + olas ───────────────────────────────────── */}
       <div className="ld-bg" aria-hidden="true">
@@ -59,15 +59,15 @@ export default function LandingPage({ onLogin, onRegister }) {
           }} />
         ))}
 
-        {/* Olas en la parte inferior */}
+        {/* Olas en la parte inferior del viewport */}
         <svg className="ld-wave ld-wave-a" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,80 C240,140 480,20 720,80 C960,140 1200,20 1440,80 C1680,140 1920,20 2160,80 C2400,140 2640,20 2880,80 L2880,160 L0,160 Z"/>
+          <path fill="rgba(66,171,222,0.28)" d="M0,80 C240,140 480,20 720,80 C960,140 1200,20 1440,80 C1680,140 1920,20 2160,80 C2400,140 2640,20 2880,80 L2880,160 L0,160 Z"/>
         </svg>
         <svg className="ld-wave ld-wave-b" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,100 C360,40 720,130 1080,70 C1440,10 1800,110 2160,60 C2520,10 2700,90 2880,100 L2880,160 L0,160 Z"/>
+          <path fill="rgba(27,90,180,0.18)" d="M0,100 C360,40 720,130 1080,70 C1440,10 1800,110 2160,60 C2520,10 2700,90 2880,100 L2880,160 L0,160 Z"/>
         </svg>
         <svg className="ld-wave ld-wave-c" viewBox="0 0 2880 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,50 C180,110 360,20 540,80 C720,140 900,30 1080,90 C1260,150 1440,40 1620,100 C1800,160 1980,50 2160,110 C2340,170 2640,60 2880,50 L2880,160 L0,160 Z"/>
+          <path fill="rgba(120,200,240,0.20)" d="M0,50 C180,110 360,20 540,80 C720,140 900,30 1080,90 C1260,150 1440,40 1620,100 C1800,160 1980,50 2160,110 C2340,170 2640,60 2880,50 L2880,160 L0,160 Z"/>
         </svg>
 
       </div>
