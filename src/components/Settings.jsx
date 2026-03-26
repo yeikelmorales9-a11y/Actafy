@@ -39,30 +39,68 @@ function EmpresaTab() {
     ciudad:        user?.ciudad        || '',
     tipo:          user?.tipo          || 'Obra civil',
   })
-  const [saving, setSaving] = useState(false)
-  const [ok, setOk]         = useState(false)
-  const [err, setErr]       = useState('')
+  const [saving, setSaving]           = useState(false)
+  const [logoLoading, setLogoLoading] = useState(false)
+  const [ok, setOk]                   = useState(false)
+  const [err, setErr]                 = useState('')
   const logoRef = useRef()
 
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
   const save = async () => {
     setSaving(true); setErr('')
-    const res = await updateUser(f)
-    setSaving(false)
-    if (res.ok) { setOk(true); setTimeout(() => setOk(false), 2500) }
-    else setErr(res.error || 'Error al guardar')
+    try {
+      const res = await updateUser(f)
+      if (res?.ok) { setOk(true); setTimeout(() => setOk(false), 2500) }
+      else setErr(res?.error || 'Error al guardar')
+    } catch { setErr('Error al guardar') }
+    finally { setSaving(false) }
   }
 
-  const handleLogo = (e) => {
-    const file = e.target.files[0]; if (!file) return
-    setErr('')
-    const reader = new FileReader()
-    reader.onload = async ev => {
-      const res = await updateUser({ logo: ev.target.result })
-      if (!res.ok) setErr(res.error || 'Error al guardar logo')
+  // Comprime imagen a máx 400px y JPEG 80% antes de guardar (~30-60 KB)
+  const compressImage = (dataUrl) => new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 400
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width  = Math.round(img.width  * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.80))
     }
+    img.onerror = reject
+    img.src = dataUrl
+  })
+
+  const handleLogo = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) { setErr('Imagen demasiado grande (máx. 8 MB)'); return }
+    setErr(''); setLogoLoading(true)
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      try {
+        const compressed = await compressImage(ev.target.result)
+        const res = await updateUser({ logo: compressed })
+        if (!res?.ok) setErr(res?.error || 'Error al guardar logo')
+      } catch { setErr('Error procesando la imagen') }
+      finally {
+        setLogoLoading(false)
+        if (logoRef.current) logoRef.current.value = ''
+      }
+    }
+    reader.onerror = () => { setErr('Error leyendo la imagen'); setLogoLoading(false) }
     reader.readAsDataURL(file)
+  }
+
+  const handleRemoveLogo = async () => {
+    setLogoLoading(true); setErr('')
+    try {
+      const res = await updateUser({ logo: null })
+      if (!res?.ok) setErr(res?.error || 'Error al quitar logo')
+    } catch { setErr('Error al quitar logo') }
+    finally { setLogoLoading(false) }
   }
 
   return (
@@ -74,19 +112,18 @@ function EmpresaTab() {
           : <div style={{ width: 80, height: 56, background: 'var(--gris)', borderRadius: 8, border: '1px dashed var(--borde)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sub)', fontSize: 11 }}>Sin logo</div>
         }
         <div>
-          <label style={{ cursor: 'pointer' }}>
+          <label style={{ cursor: logoLoading ? 'not-allowed' : 'pointer', opacity: logoLoading ? 0.6 : 1 }}>
             <span style={{ border: '1px solid var(--azul2)', color: 'var(--azul2)', background: 'var(--azul-bg)', padding: '6px 14px', borderRadius: 'var(--radio)', fontSize: 12, fontWeight: 600 }}>
-              {user?.logo ? 'Cambiar logo' : 'Subir logo'}
+              {logoLoading ? 'Procesando…' : user?.logo ? 'Cambiar logo' : 'Subir logo'}
             </span>
-            <input ref={logoRef} type="file" accept="image/*" onChange={handleLogo} style={{ display: 'none' }} />
+            <input ref={logoRef} type="file" accept="image/*" onChange={handleLogo} disabled={logoLoading} style={{ display: 'none' }} />
           </label>
           {user?.logo && (
-            <button className="btn-danger btn-sm" style={{ marginLeft: 8 }} onClick={async () => {
-              const res = await updateUser({ logo: null })
-              if (!res.ok) setErr(res.error)
-            }}>Quitar</button>
+            <button className="btn-danger btn-sm" style={{ marginLeft: 8 }} disabled={logoLoading} onClick={handleRemoveLogo}>
+              {logoLoading ? '…' : 'Quitar'}
+            </button>
           )}
-          <p style={{ fontSize: 11, color: 'var(--sub)', marginTop: 6 }}>PNG o JPG · aparece en el encabezado del acta</p>
+          <p style={{ fontSize: 11, color: 'var(--sub)', marginTop: 6 }}>PNG o JPG · se comprime automáticamente</p>
         </div>
       </div>
 
