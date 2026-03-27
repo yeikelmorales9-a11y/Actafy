@@ -214,12 +214,17 @@ export function AuthProvider({ children }) {
   const userId   = supabase ? (supaUser?.id || null) : localUser
   const username = supabase ? (supaUser?.email || null) : localUser
 
+  // Permite refrescar el perfil desde fuera (ej: después de pago exitoso)
+  const refreshProfile = useCallback(async (uid) => {
+    if (supabase && uid) await fetchProfile(uid)
+  }, [])
+
   return (
     <AuthContext.Provider value={{
       user, userId, username,
       login, register, logout, updateUser,
       resetPassword, updatePassword, passwordRecovery,
-      loading,
+      loading, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
